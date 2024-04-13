@@ -15,15 +15,17 @@ export async function GET(req: NextRequest) {
     );
     if (key) {
         const storyDoc = await db.collection('stories').doc(key).get();
-        const story = storyDoc.data()?.story.toString();
+        const story = storyDoc.data()?.filledStory.toString();
         const { title, content } = extractTitle(story);
 
         body = (
-            <div tw='flex' style={{ width: '800px', height: '800px', padding: '8px', flexDirection: 'column' }}>
-                <div style={{ fontWeight: 'bold', fontSize: '1.5rem' }}>{title}</div>
-                <pre style={{whiteSpace: 'pre-wrap', wordWrap: 'break-word', overflowWrap: 'break-word', fontSize: '1.15rem'}}>
-                    <div tw='flex flex-col'>{content}</div>
-                </pre>
+            <div tw='flex' style={{ width: '800px', height: '800px', padding: '16px', backgroundColor: 'hsl(115, 75%, 90%)' }}>
+                <div tw='flex' style={{  padding: '16px', flexDirection: 'column', backgroundColor: 'whitesmoke', borderRadius: '20px' }}>
+                    <div style={{ fontWeight: 'bold', fontSize: '1.5rem' }}>{title}</div>
+                    <pre style={{whiteSpace: 'pre-wrap', wordWrap: 'break-word', overflowWrap: 'break-word', fontSize: '1.125rem'}}>
+                        <div tw='flex flex-col'>{content}</div>
+                    </pre>
+                </div>
             </div>
         );
     }

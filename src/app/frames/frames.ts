@@ -1,16 +1,16 @@
 import { createFrames } from 'frames.js/next';
 
 export type State = {
-    story: string | null;
     prompts: string[];
     values: string[];
+    docId: string | null;
 }
 
 export const frames = createFrames<State>({
     basePath: '/frames',
     initialState: {
-        story: null,
         prompts: [],
-        values: []
+        values: [],
+        docId: null
     }
 });

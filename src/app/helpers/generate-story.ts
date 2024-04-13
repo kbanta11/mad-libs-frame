@@ -5,7 +5,50 @@ const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
 });
 
+const topicMapping = {
+    'random': [
+        'a random story',
+        'a funny story about anything',
+        'a crazy childhood story',
+        'anything fun you can think of'
+    ],
+    'tech': [
+        'technology and people in tech',
+        'alien sci-fi',
+        'futuristic sci-fi',
+        'artificial intelligence',
+        'robots',
+        'dystopian modern technology',
+        'cryptocurrency (but funny and entertaining)'
+    ],
+    'history': [
+        'a random historical event',
+        'asian history culture, stories or events',
+        'african history culture, stories or events',
+        'north american history culture, stories or events',
+        'south american history culture, stories or events',
+        'european history culture, stories or events',
+        'australia/south pacific culture, history or events',
+        'historical war events',
+        'historical invention events',
+        'pop culture',
+        'random culture'
+    ],
+    'life': [
+        'random daily life',
+        'life in the city',
+        'life in the suburbs',
+        'life in rural places',
+        'traveling',
+        'working',
+        'major life events'
+    ],
+}
+
 const generateStory = async (topic: string) => {
+    const topicPrompts = topicMapping[topic as 'random' | 'tech' | 'history' | 'life'];
+    const randomIndex = Math.floor(Math.random() * topicPrompts.length);
+    const prompt = topicPrompts[randomIndex];
     let prompts: string[] = [];
     let story: string | null = null;
     while (!prompts || prompts.length < 8 || prompts.length > 15) {
@@ -41,7 +84,7 @@ const generateStory = async (topic: string) => {
                 },
                 {
                     role: "user", 
-                    content: `ok good, now lets try one about ${topic}. again make sure between 8 and 12 prompts, denoted by [[]]`
+                    content: `ok good, now lets try one about ${prompt}. again make sure between 8 and 12 prompts, denoted by [[]], and only use [[noun]] or [[name]] a few times and DO NOT use [[title]] as a prompt. Do make sure that the first line is the story title.`
                 },
             ],
             model: 'gpt-3.5-turbo',

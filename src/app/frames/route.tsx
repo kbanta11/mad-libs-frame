@@ -14,16 +14,36 @@ const handleRequest = frames(async (ctx) => {
   //let state = ctx.state;
   if (ctx.pressedButton && ctx.searchParams.type) {
     const type = ctx.searchParams.type;
-    const response = await fetch(`${base.toString().replace('/frames', '/api')}/generate-story?value=${type}`);
+    const response = await fetch(`${base.toString().replace('/frames', '/api')}/generate-story?value=${type}${ctx.state.docId ? `&docId=${ctx.state.docId}` : ''}`);
     const data = (await response.json());
-    //ctx.state = {...ctx.state, story: data.story, prompts: data.prompts };
-    ctx.state.story = data.story;
+    console.log(`GENERATE STORY DATA: ${JSON.stringify(data)}`)
+    if (data.generating) {
+      ctx.state.docId = data.docId;
+      return {
+        image: (
+          <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center'}}>
+            <div>GENERATING STORY.</div>
+            <div>REFRESH BELOW.</div>
+            <div>(may take up to 30 seconds)</div>
+          </div>
+        ),
+        imageOptions: {
+          aspectRatio: '1:1'
+        },
+        state: {
+          prompts: ctx.state.prompts,
+          values: ctx.state.values,
+          docId: ctx.state.docId
+        },
+        buttons: [
+          <Button key='value' action="post" target={`${base}/?type=refresh`}>Refresh</Button>
+        ]
+      }
+    }
     ctx.state.prompts = data.prompts;
-    //ctx.state = {...ctx.state, story: data.story, prompts: data.prompts };
   }
 
-  const stateKBs = (new TextEncoder().encode(JSON.stringify(ctx.state)).length) / 1024;
-  if (ctx.state.story) {
+  if (ctx.state.prompts.length > 0) {
     if (ctx.pressedButton && ctx.searchParams.value && ctx.searchParams.value !== '' && ctx.message?.inputText && ctx.message?.inputText !== '') {
       const values = ctx.state.values;
       values.push(ctx.message?.inputText);
@@ -31,19 +51,21 @@ const handleRequest = frames(async (ctx) => {
     }
 
     if (ctx.state.values.length !== ctx.state.prompts.length) {
-    //if(!(ctx.state.values && ctx.state.prompts)) {
       const prompt = ctx.state.prompts[ctx.state.values.length];
       return {
         image: (
-          <div>{prompt}</div>
+          <div tw='flex' style={{ flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
+            <div tw='flex'>{ctx.state.values.length + 1}/{ctx.state.prompts.length}</div>
+            {prompt}
+          </div>
         ),
         imageOptions: {
           aspectRatio: '1:1'
         },
         state: {
-          story: ctx.state.story,
           prompts: ctx.state.prompts,
           values: ctx.state.values,
+          docId: ctx.state.docId
         },
         textInput: `Enter a(n) ${prompt}`,
         buttons: [
@@ -52,13 +74,15 @@ const handleRequest = frames(async (ctx) => {
       }
     } else {
       // get replaced story
-      const filledStory =  ctx.state.story ? replaceStoryPrompts(ctx.state.story, ctx.state.prompts, ctx.state.values) : '';
+      //const filledStory =  ctx.state.story ? replaceStoryPrompts(ctx.state.story, ctx.state.prompts, ctx.state.values) : '';
       const response = await fetch(`${base.toString().replace('/frames', '/api')}/store-filled-story`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           fid: ctx.message?.requesterFid,
-          story: filledStory
+          docId: ctx.state.docId,
+          prompts: ctx.state.prompts,
+          values: ctx.state.values
         })
       });
       const key = (await response.json()).key;
@@ -70,9 +94,9 @@ const handleRequest = frames(async (ctx) => {
           aspectRatio: '1:1',
         },
         state: {
-          story: ctx.state.story,
           prompts: ctx.state.prompts,
           values: ctx.state.values,
+          docId: ctx.state.docId
         },
         buttons: [
           <Button key='value' action="link" target={`https://warpcast.com/~/compose?text=Check%20out%20my%20Mad%20Lib!&embeds[]=${imgUrl}`}>Share</Button>
